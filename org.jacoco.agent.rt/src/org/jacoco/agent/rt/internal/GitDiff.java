@@ -59,7 +59,7 @@ public class GitDiff {
      * @return
      * @throws IOException
      */
-    private AbstractTreeIterator prepareTreeParserBranch(Repository repository, String branchName) throws IOException {
+    private static AbstractTreeIterator prepareTreeParserBranch(Repository repository, String branchName) throws IOException {
 
         ObjectId objectId = repository.exactRef(branchName).getObjectId();
 
@@ -85,22 +85,24 @@ public class GitDiff {
      * @throws GitAPIException
      * @throws IOException
      */
-    private List<DiffEntry> diffByBranch(Repository repository, String baseBranch, String diffBranch) throws GitAPIException, IOException {
+    public static List<DiffEntry> diffByBranch(Repository repository, String baseBranch, String diffBranch) {
+        List<DiffEntry> diffs = null;
+        AbstractTreeIterator baseBranchTree;
+        AbstractTreeIterator diffBranchTree;
+        try {
+            baseBranchTree = prepareTreeParserBranch(repository, baseBranch);
+            diffBranchTree = prepareTreeParserBranch(repository, diffBranch);
 
-        AbstractTreeIterator baseBranchTree = prepareTreeParserBranch(repository, baseBranch);
-        AbstractTreeIterator diffBranchTree = prepareTreeParserBranch(repository, diffBranch);
 
-        List<DiffEntry> diffs = getGit(getRepository()).diff()
-                .setOldTree(baseBranchTree)
-                .setNewTree(diffBranchTree)
-                .setPathFilter(PathSuffixFilter.create(".java"))
-                .call();
-
-        System.out.println("Found: " + diffs.size() + " differences");
-
-        for (DiffEntry diffEntry : diffs) {
-            System.out.println("Diff: " + diffEntry.getChangeType() + ": " +
-                    (diffEntry.getOldPath().equals(diffEntry.getNewPath()) ? diffEntry.getNewPath() : diffEntry.getOldPath() + " -> " + diffEntry.getNewPath()));
+            diffs = getGit(getRepository()).diff()
+                    .setOldTree(baseBranchTree)
+                    .setNewTree(diffBranchTree)
+                    .setPathFilter(PathSuffixFilter.create(".java"))
+                    .call();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (GitAPIException e) {
+            e.printStackTrace();
         }
 
         return diffs;

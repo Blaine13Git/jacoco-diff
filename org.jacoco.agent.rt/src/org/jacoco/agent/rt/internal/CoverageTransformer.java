@@ -16,7 +16,10 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
+import java.util.List;
 
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.lib.Repository;
 import org.jacoco.core.instr.Instrumenter;
 import org.jacoco.core.runtime.AgentOptions;
 import org.jacoco.core.runtime.IRuntime;
@@ -163,8 +166,20 @@ public class CoverageTransformer implements ClassFileTransformer {
      * @return
      */
     private boolean diff(String classname) {
+        Repository repository = GitDiff.getRepository();
 
-        return true;
+        List<DiffEntry> diffs = GitDiff.diffByBranch(repository, baseBranch, diffBranch);
+
+        System.out.println("Found: " + diffs.size() + " differences");
+
+        for (DiffEntry diffEntry : diffs) {
+            String diffClassName = diffEntry.getNewPath().split("src/main/java/")[1];
+            if (classname.equals(diffClassName)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }
