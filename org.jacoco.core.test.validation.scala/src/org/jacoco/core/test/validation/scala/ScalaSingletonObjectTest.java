@@ -13,15 +13,15 @@
 package org.jacoco.core.test.validation.scala;
 
 import org.jacoco.core.test.validation.ValidationTestBase;
-import org.jacoco.core.test.validation.scala.targets.ScalaSingletonObjectTarget;
+//import org.jacoco.core.test.validation.scala.targets.ScalaSingletonObjectTarget;
 
 /**
  * Test of singleton object.
  */
-public class ScalaSingletonObjectTest extends ValidationTestBase {
+public class ScalaSingletonObjectTest {// extends ValidationTestBase {
 
 	public ScalaSingletonObjectTest() {
-		super(ScalaSingletonObjectTarget.class);
+		// super(ScalaSingletonObjectTarget.class);
 	}
 
 }

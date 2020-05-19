@@ -13,15 +13,15 @@
 package org.jacoco.core.test.validation.scala;
 
 import org.jacoco.core.test.validation.ValidationTestBase;
-import org.jacoco.core.test.validation.scala.targets.ScalaSynchronizedTarget;
+//import org.jacoco.core.test.validation.scala.targets.ScalaSynchronizedTarget;
 
 /**
  * Test of synchronized block.
  */
-public class ScalaSynchronizedTest extends ValidationTestBase {
+public class ScalaSynchronizedTest { // extends ValidationTestBase {
 
 	public ScalaSynchronizedTest() {
-		super(ScalaSynchronizedTarget.class);
+		// super(ScalaSynchronizedTarget.class);
 	}
 
 }
