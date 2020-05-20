@@ -28,88 +28,78 @@ import org.jacoco.core.runtime.ModifiedSystemClassRuntime;
  */
 public final class PreMain {
 
-	private PreMain() {
-		// no instances
-	}
+    private PreMain() {
+        // no instances
+    }
 
-	/**
-	 * This method is called by the JVM to initialize Java agents.
-	 *
-	 * @param options
-	 *            agent options
-	 * @param inst
-	 *            instrumentation callback provided by the JVM
-	 * @throws Exception
-	 *             in case initialization fails
-	 */
-	public static void premain(final String options, final Instrumentation inst)
-			throws Exception {
+    /**
+     * This method is called by the JVM to initialize Java agents.
+     *
+     * @param options agent options
+     * @param inst    instrumentation callback provided by the JVM
+     * @throws Exception in case initialization fails
+     */
+    public static void premain(final String options, final Instrumentation inst) throws Exception {
 
-		final AgentOptions agentOptions = new AgentOptions(options);
+        final AgentOptions agentOptions = new AgentOptions(options);
 
-		final Agent agent = Agent.getInstance(agentOptions);
+        final Agent agent = Agent.getInstance(agentOptions);
 
-		final IRuntime runtime = createRuntime(inst);
-		runtime.startup(agent.getData());
-		inst.addTransformer(new CoverageTransformer(runtime, agentOptions,
-				IExceptionLogger.SYSTEM_ERR));
-	}
+        final IRuntime runtime = createRuntime(inst);
+        runtime.startup(agent.getData());
+        inst.addTransformer(new CoverageTransformer(runtime, agentOptions, IExceptionLogger.SYSTEM_ERR));
+    }
 
-	private static IRuntime createRuntime(final Instrumentation inst)
-			throws Exception {
+    private static IRuntime createRuntime(final Instrumentation inst) throws Exception {
 
-		if (redefineJavaBaseModule(inst)) {
-			return new InjectedClassRuntime(Object.class, "$JaCoCo");
-		}
+        if (redefineJavaBaseModule(inst)) {
+            return new InjectedClassRuntime(Object.class, "$JaCoCo");
+        }
 
-		return ModifiedSystemClassRuntime.createFor(inst,
-				"java/lang/UnknownError");
-	}
+        return ModifiedSystemClassRuntime.createFor(inst,
+                "java/lang/UnknownError");
+    }
 
-	/**
-	 * Opens {@code java.base} module for {@link InjectedClassRuntime} when
-	 * executed on Java 9 JREs or higher.
-	 *
-	 * @return <code>true</code> when running on Java 9 or higher,
-	 *         <code>false</code> otherwise
-	 * @throws Exception
-	 *             if unable to open
-	 */
-	private static boolean redefineJavaBaseModule(
-			final Instrumentation instrumentation) throws Exception {
-		try {
-			Class.forName("java.lang.Module");
-		} catch (final ClassNotFoundException e) {
-			return false;
-		}
+    /**
+     * Opens {@code java.base} module for {@link InjectedClassRuntime} when
+     * executed on Java 9 JREs or higher.
+     *
+     * @return <code>true</code> when running on Java 9 or higher,
+     * <code>false</code> otherwise
+     * @throws Exception if unable to open
+     */
+    private static boolean redefineJavaBaseModule(final Instrumentation instrumentation) throws Exception {
+        try {
+            Class.forName("java.lang.Module");
+        } catch (final ClassNotFoundException e) {
+            return false;
+        }
 
-		Instrumentation.class.getMethod("redefineModule", //
-				Class.forName("java.lang.Module"), //
-				Set.class, //
-				Map.class, //
-				Map.class, //
-				Set.class, //
-				Map.class //
-		).invoke(instrumentation, // instance
-				getModule(Object.class), // module
-				Collections.emptySet(), // extraReads
-				Collections.emptyMap(), // extraExports
-				Collections.singletonMap("java.lang",
-						Collections.singleton(
-								getModule(InjectedClassRuntime.class))), // extraOpens
-				Collections.emptySet(), // extraUses
-				Collections.emptyMap() // extraProvides
-		);
-		return true;
-	}
+        Instrumentation.class.getMethod(
+                "redefineModule", //
+                Class.forName("java.lang.Module"), //
+                Set.class, //
+                Map.class, //
+                Map.class, //
+                Set.class, //
+                Map.class //
+        ).invoke(
+                instrumentation, // instance
+                getModule(Object.class), // module
+                Collections.emptySet(), // extraReads
+                Collections.emptyMap(), // extraExports
+                Collections.singletonMap("java.lang", Collections.singleton(getModule(InjectedClassRuntime.class))), // extraOpens
+                Collections.emptySet(), // extraUses
+                Collections.emptyMap() // extraProvides
+        );
+        return true;
+    }
 
-	/**
-	 * @return {@code cls.getModule()}
-	 */
-	private static Object getModule(final Class<?> cls) throws Exception {
-		return Class.class //
-				.getMethod("getModule") //
-				.invoke(cls);
-	}
+    /**
+     * @return {@code cls.getModule()}
+     */
+    private static Object getModule(final Class<?> cls) throws Exception {
+        return Class.class.getMethod("getModule").invoke(cls);
+    }
 
 }
