@@ -17,6 +17,7 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.Repository;
@@ -24,11 +25,15 @@ import org.jacoco.core.instr.Instrumenter;
 import org.jacoco.core.runtime.AgentOptions;
 import org.jacoco.core.runtime.IRuntime;
 import org.jacoco.core.runtime.WildcardMatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class file transformer to instrument classes for code coverage analysis.
  */
 public class CoverageTransformer implements ClassFileTransformer {
+
+    Logger log = LoggerFactory.getLogger(CoverageTransformer.class);
 
     private static final String AGENT_PREFIX;
 
@@ -77,11 +82,16 @@ public class CoverageTransformer implements ClassFileTransformer {
         classFileDumper = new ClassFileDumper(options.getClassDumpDir());
         inclBootstrapClasses = options.getInclBootstrapClasses();
         inclNoLocationClasses = options.getInclNoLocationClasses();
+
         baseBranch = options.getBaseBranch();
         diffBranch = options.getDiffBranch();
+
+        log.info(">>> baseBranch >>> " + baseBranch);
+        log.info(">>> diffBranch >>> " + diffBranch);
     }
 
-    public byte[] transform(final ClassLoader loader, final String classname,
+    public byte[] transform(final ClassLoader loader,
+                            final String classname,
                             final Class<?> classBeingRedefined,
                             final ProtectionDomain protectionDomain,
                             final byte[] classfileBuffer) throws IllegalClassFormatException {
@@ -92,6 +102,18 @@ public class CoverageTransformer implements ClassFileTransformer {
         }
 
         if (!filter(loader, classname, protectionDomain)) {
+            return null;
+        }
+
+        /**
+         * 1、没有分支信息返回
+         * 2、如果不是diff的文件，返回 !classname.contains("LiveToolsController")
+         */
+        if ("".equals(baseBranch) || "".equals(diffBranch)) {
+            return null;
+        }
+
+        if (!isDiff(classname)) {
             return null;
         }
 
@@ -133,7 +155,7 @@ public class CoverageTransformer implements ClassFileTransformer {
 
         return !classname.startsWith(AGENT_PREFIX) &&
 
-                includes.matches(classname) && isDiff(classname) &&
+                includes.matches(classname) &&
 
                 !excludes.matches(classname);
     }
@@ -161,19 +183,20 @@ public class CoverageTransformer implements ClassFileTransformer {
     }
 
     /**
+     * 判断是否为diff文件
+     *
      * @param classname
-     * @return
+     * @return <code>true</code> 表示是diff文件
      */
     private boolean isDiff(String classname) {
-        Repository repository = GitDiff.getRepository();
+        System.out.println("\n=========================" + classname + " come=========================");
+        List<DiffEntry> notDeleteDiffEntries = new GitDiff().getNotDelete(baseBranch, diffBranch);
 
-        List<DiffEntry> diffs = GitDiff.getDiffByBranch(repository, baseBranch, diffBranch);
+        for (DiffEntry diffEntry : notDeleteDiffEntries) {
+            System.out.println("=========================" + diffEntry.getNewPath() + " diff=========================");
 
-//		System.out.println("Found: " + diffs.size() + " differences");
-
-        for (DiffEntry diffEntry : diffs) {
-            String diffClassName = diffEntry.getNewPath().split("src/main/java/")[1];
-            if (classname.equals(diffClassName)) {
+            if (diffEntry.getNewPath().contains(classname)) {
+                log.info(">>> Diffed Classname >>> " + classname + "\n");
                 return true;
             }
         }

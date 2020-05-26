@@ -12,8 +12,12 @@
  *******************************************************************************/
 package org.jacoco.agent.rt.internal;
 
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.lang.instrument.Instrumentation;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,21 +36,42 @@ public final class PreMain {
         // no instances
     }
 
-    /**
-     * This method is called by the JVM to initialize Java agents.
-     *
-     * @param options agent options
-     * @param inst    instrumentation callback provided by the JVM
-     * @throws Exception in case initialization fails
-     */
     public static void premain(final String options, final Instrumentation inst) throws Exception {
+
+        // 重定向输出到指定文件
+        if (true) {
+            Date date = new Date();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            String formatDate = dateFormat.format(date);
+
+            String traceFilePath = "";
+            String traceFile;
+
+            String projectPath = System.getProperty("user.dir");
+
+            String projectName = projectPath.substring(projectPath.lastIndexOf("/") + 1);
+
+            if (null == traceFilePath || traceFilePath.length() == 0) {
+                traceFile = projectPath + "/" + formatDate + "_" + projectName + "_Trace.log";
+                redirectOutPut(traceFile);
+            } else {
+                traceFile = traceFilePath + "/" + formatDate + "_" + projectName + "_Trace.log";
+                redirectOutPut(traceFile);
+            }
+
+            System.out.println("======================日志被重定向到 >> " + traceFile + "======================");
+        }
+
+        System.out.println("======================init======================");
 
         final AgentOptions agentOptions = new AgentOptions(options);
 
         final Agent agent = Agent.getInstance(agentOptions);
 
         final IRuntime runtime = createRuntime(inst);
+
         runtime.startup(agent.getData());
+
         inst.addTransformer(new CoverageTransformer(runtime, agentOptions, IExceptionLogger.SYSTEM_ERR));
     }
 
@@ -100,6 +125,23 @@ public final class PreMain {
      */
     private static Object getModule(final Class<?> cls) throws Exception {
         return Class.class.getMethod("getModule").invoke(cls);
+    }
+
+
+    /**
+     * 重定向输出
+     *
+     * @param filePath
+     */
+    public static void redirectOutPut(String filePath) {
+        try {
+            FileOutputStream fileOutputStream = new FileOutputStream(filePath, true);
+            PrintStream printStream = new PrintStream(fileOutputStream);
+            System.setOut(printStream);
+            System.setErr(printStream);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

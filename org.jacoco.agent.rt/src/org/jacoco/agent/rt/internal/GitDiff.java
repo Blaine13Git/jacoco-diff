@@ -3,8 +3,8 @@ package org.jacoco.agent.rt.internal;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
@@ -17,40 +17,44 @@ import org.eclipse.jgit.treewalk.filter.PathSuffixFilter;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GitDiff {
     private static Git git;
     private static Repository repository;
+    private static final String PREFIX = "refs/heads/";
 
-    // 获取repository对象--单例DCL模式
-    public static Repository getRepository() {
+    public GitDiff() {
+        // 获取git对象--单例DCL模式
         if (null == repository) {
             synchronized (GitDiff.class) {
                 if (null == repository) {
                     try {
-                        String projectPath = System.getProperty("user.dir");
-                        repository = new FileRepositoryBuilder()
-                                .setGitDir(new File(projectPath + "/.git"))
-                                .build();
+
+                        // 方式1
+                        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+                        repository = builder.readEnvironment().findGitDir().build();
+
+                        // 方式2
+//                        String projectPath = System.getProperty("user.dir");
+//                        repository = builder.setGitDir(new File(projectPath + "/.git")).build();
+
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
             }
         }
-        return repository;
-    }
 
-    // 获取git对象--单例DCL模式
-    public static Git getGit(Repository repository) {
+        // 获取repository对象--单例DCL模式
         if (null == git) {
             synchronized (GitDiff.class) {
                 if (null == git) {
-                    git = new Git(getRepository());
+                    git = new Git(repository);
                 }
             }
         }
-        return git;
+
     }
 
     /**
@@ -59,13 +63,10 @@ public class GitDiff {
      * @return
      * @throws IOException
      */
-    private static AbstractTreeIterator prepareTreeParserBranch(
-            Repository repository, String branchName) throws IOException {
-
-        ObjectId objectId = repository.exactRef(branchName).getObjectId();
-
+    private static AbstractTreeIterator prepareTreeParserBranch(Repository repository, String branchName) throws IOException {
+        Ref ref = repository.exactRef(branchName);
         try (RevWalk walk = new RevWalk(repository)) {
-            RevCommit commit = walk.parseCommit(objectId);
+            RevCommit commit = walk.parseCommit(ref.getObjectId());
             RevTree tree = walk.parseTree(commit.getTree().getId());
 
             CanonicalTreeParser treeParser = new CanonicalTreeParser();
@@ -77,27 +78,33 @@ public class GitDiff {
         }
     }
 
+
     /**
      * diff by branch
      *
-     * @param repository
      * @param baseBranch
      * @param diffBranch
-     * @throws GitAPIException
-     * @throws IOException
+     * @return Diff DiffEntry list
      */
-    public static List<DiffEntry> getDiffByBranch(Repository repository,
-                                                  String baseBranch, String diffBranch) {
+    public List<DiffEntry> getDiffEntriesByBranch(String baseBranch, String diffBranch) {
         List<DiffEntry> diffs = null;
-        AbstractTreeIterator baseBranchTree;
-        AbstractTreeIterator diffBranchTree;
         try {
-            baseBranchTree = prepareTreeParserBranch(repository, baseBranch);
-            diffBranchTree = prepareTreeParserBranch(repository, diffBranch);
 
-            diffs = getGit(getRepository()).diff().setOldTree(baseBranchTree)
+            AbstractTreeIterator baseBranchTree = prepareTreeParserBranch(repository, PREFIX + baseBranch);
+            AbstractTreeIterator diffBranchTree = prepareTreeParserBranch(repository, PREFIX + diffBranch);
+
+            diffs = git.diff()
+                    .setOldTree(baseBranchTree)
                     .setNewTree(diffBranchTree)
-                    .setPathFilter(PathSuffixFilter.create(".java")).call();
+                    .setPathFilter(PathSuffixFilter.create(".java"))
+                    .call();
+
+//            System.out.println("\nFound All: " + diffs.size() + " differences");
+//            for (DiffEntry diff : diffs) {
+//                System.out.println("Diff: " + diff.getChangeType() + ": " +
+//                        (diff.getOldPath().equals(diff.getNewPath()) ? diff.getNewPath() : diff.getOldPath() + " -> " + diff.getNewPath()));
+//            }
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (GitAPIException e) {
@@ -105,4 +112,93 @@ public class GitDiff {
         }
         return diffs;
     }
+
+    /**
+     * 获取修改的内容
+     *
+     * @param baseBranch
+     * @param diffBranch
+     * @return 返回修改的list
+     */
+    public List<DiffEntry> getModify(String baseBranch, String diffBranch) {
+        List<DiffEntry> diffEntries = getDiffEntriesByBranch(baseBranch, diffBranch);
+        List<DiffEntry> modifyList = diffEntries.stream().filter(diffEntry -> diffEntry.getChangeType().toString().equals("MODIFY")).collect(Collectors.toList());
+
+//        System.out.println("\nFound modify: " + modifyList.size() + " differences");
+//        for (DiffEntry diff : modifyList) {
+//            System.out.println("Modify: " + diff.getNewPath());
+//        }
+        return modifyList;
+    }
+
+    /**
+     * 获取新增内容
+     *
+     * @param baseBranch
+     * @param diffBranch
+     * @return 返回新增的list
+     */
+    public List<DiffEntry> getAdd(String baseBranch, String diffBranch) {
+        List<DiffEntry> diffEntries = getDiffEntriesByBranch(baseBranch, diffBranch);
+        List<DiffEntry> addList = diffEntries.stream().filter(diffEntry -> diffEntry.getChangeType().toString().equals("ADD")).collect(Collectors.toList());
+
+//        System.out.println("\nFound add: " + addList.size() + " differences");
+//        for (DiffEntry diff : addList) {
+//            System.out.println("Add: " + diff.getNewPath());
+//        }
+        return addList;
+    }
+
+    /**
+     * 获取删除的内容
+     *
+     * @param baseBranch
+     * @param diffBranch
+     * @return 返回删除的list
+     */
+    public List<DiffEntry> getDelete(String baseBranch, String diffBranch) {
+        List<DiffEntry> diffEntries = getDiffEntriesByBranch(baseBranch, diffBranch);
+        List<DiffEntry> deleteList = diffEntries.stream().filter(diffEntry -> diffEntry.getChangeType().toString().equals("DELETE")).collect(Collectors.toList());
+
+//        System.out.println("\nFound delete: " + deleteList.size() + " differences");
+//        for (DiffEntry diff : deleteList) {
+//            System.out.println("Delete: " + diff.getOldPath());
+//        }
+
+        return deleteList;
+    }
+
+    /**
+     * 获取非删除的内容（即modify & add）
+     *
+     * @param baseBranch
+     * @param diffBranch
+     * @return 返回删除的list
+     */
+    public List<DiffEntry> getNotDelete(String baseBranch, String diffBranch) {
+        List<DiffEntry> diffEntries = getDiffEntriesByBranch(baseBranch, diffBranch);
+        List<DiffEntry> notDeleteList = diffEntries.stream().filter(diffEntry -> !(diffEntry.getChangeType().toString().equals("DELETE"))).collect(Collectors.toList());
+
+//        System.out.println("\nFound not delete: " + notDeleteList.size() + " differences");
+//        for (DiffEntry diff : notDeleteList) {
+//            System.out.println("Not Delete: " + diff.getChangeType().toString() + " " + diff.getNewPath());
+//        }
+
+        return notDeleteList;
+    }
+
+
+    public static void main(String[] args) {
+
+//        GitDiff gitDiff = new GitDiff();
+//        List<DiffEntry> diffs = gitDiff.getDiffEntriesByBranch("master", "home-test");
+//
+//        List<DiffEntry> modify = gitDiff.getModify("master", "home-test");
+//        List<DiffEntry> add = gitDiff.getAdd("master", "home-test");
+//        List<DiffEntry> delete = gitDiff.getDelete("master", "home-test");
+//        List<DiffEntry> delete = gitDiff.getNotDelete("master", "home-test");
+
+    }
+
 }
+
