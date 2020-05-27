@@ -38,6 +38,12 @@
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm-tree</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.jgit</groupId>
+      <artifactId>org.eclipse.jgit</artifactId>
+      <version>5.7.0.202003110725-r</version>
+    </dependency>
   </dependencies>
 
   <build>

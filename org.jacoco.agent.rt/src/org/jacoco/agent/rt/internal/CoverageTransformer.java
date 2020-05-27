@@ -17,11 +17,10 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.lib.Repository;
 import org.jacoco.core.instr.Instrumenter;
+import org.jacoco.core.internal.flow.GitDiff;
 import org.jacoco.core.runtime.AgentOptions;
 import org.jacoco.core.runtime.IRuntime;
 import org.jacoco.core.runtime.WildcardMatcher;
@@ -113,7 +112,7 @@ public class CoverageTransformer implements ClassFileTransformer {
             return null;
         }
 
-        if (!isDiff(classname)) {
+        if (!new GitDiff().isDiff(classname, baseBranch, diffBranch)) {
             return null;
         }
 
@@ -182,25 +181,5 @@ public class CoverageTransformer implements ClassFileTransformer {
         return srcName.replace('.', '/');
     }
 
-    /**
-     * 判断是否为diff文件
-     *
-     * @param classname
-     * @return <code>true</code> 表示是diff文件
-     */
-    private boolean isDiff(String classname) {
-        System.out.println("\n=========================" + classname + " come=========================");
-        List<DiffEntry> notDeleteDiffEntries = new GitDiff().getNotDelete(baseBranch, diffBranch);
-
-        for (DiffEntry diffEntry : notDeleteDiffEntries) {
-            System.out.println("=========================" + diffEntry.getNewPath() + " diff=========================");
-
-            if (diffEntry.getNewPath().contains(classname)) {
-                log.info(">>> Diffed Classname >>> " + classname + "\n");
-                return true;
-            }
-        }
-        return false;
-    }
 
 }

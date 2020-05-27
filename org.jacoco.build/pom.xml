@@ -378,7 +378,7 @@
               <!-- Workaround to be able to compile into Java 13 bytecode -->
               <groupId>org.ow2.asm</groupId>
               <artifactId>asm</artifactId>
-              <version>7.1</version>
+              <version>8.0.1</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -411,7 +411,7 @@
               <!-- Workaround to be able to compile into Java 13 bytecode -->
               <groupId>org.ow2.asm</groupId>
               <artifactId>asm</artifactId>
-              <version>7.1</version>
+              <version>8.0.1</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -943,8 +943,9 @@
               </execution>
             </executions>
           </plugin>
+
           <!-- Generates Javadoc -->
-          <plugin>
+          <!--<plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
             <executions>
@@ -955,7 +956,8 @@
                 </goals>
               </execution>
             </executions>
-          </plugin>
+          </plugin>-->
+
         </plugins>
       </build>
     </profile>
@@ -1009,8 +1011,9 @@
               </execution>
             </executions>
           </plugin>
+
           <!-- Signs artifacts -->
-          <plugin>
+          <!--<plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
             <executions>
@@ -1022,7 +1025,8 @@
                 </goals>
               </execution>
             </executions>
-          </plugin>
+          </plugin>-->
+
         </plugins>
       </build>
     </profile>

@@ -39,7 +39,7 @@ public final class PreMain {
     public static void premain(final String options, final Instrumentation inst) throws Exception {
 
         // 重定向输出到指定文件
-        if (true) {
+        if (false) {
             Date date = new Date();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             String formatDate = dateFormat.format(date);

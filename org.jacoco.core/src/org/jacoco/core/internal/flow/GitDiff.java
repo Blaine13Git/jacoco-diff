@@ -1,4 +1,4 @@
-package org.jacoco.agent.rt.internal;
+package org.jacoco.core.internal.flow;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -13,13 +13,15 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.filter.PathSuffixFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class GitDiff {
+    private Logger log = LoggerFactory.getLogger(GitDiff.class);
     private static Git git;
     private static Repository repository;
     private static final String PREFIX = "refs/heads/";
@@ -185,6 +187,27 @@ public class GitDiff {
 //        }
 
         return notDeleteList;
+    }
+
+    /**
+     * 判断是否为diff文件
+     *
+     * @param classname
+     * @return <code>true</code> 表示是diff文件
+     */
+    public boolean isDiff(String classname, String baseBranch, String diffBranch) {
+        List<DiffEntry> notDeleteDiffEntries = getNotDelete(baseBranch, diffBranch);
+
+        for (DiffEntry diffEntry : notDeleteDiffEntries) {
+
+            if (diffEntry.getNewPath().contains(classname)) {
+
+                log.info(">>> Diffed Classname >>> " + classname + "\n");
+
+                return true;
+            }
+        }
+        return false;
     }
 
 
