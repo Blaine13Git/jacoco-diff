@@ -257,8 +257,6 @@ public class Analyzer {
                 }
             }
         }
-
-        System.out.println(">>> count >>> " + count);
         return count;
     }
 
