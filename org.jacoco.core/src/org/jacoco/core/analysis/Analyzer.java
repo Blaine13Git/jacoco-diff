@@ -239,17 +239,21 @@ public class Analyzer {
             // 只分析被改动过的文件
             String absolutePath = file.getAbsolutePath();
             String projectPath = System.getProperty("user.dir");
-            String projectClassPath = projectPath + "/target/classes/";
+            String projectClassPath = projectPath;
             String relativePath = absolutePath.replace(projectClassPath, "");
-            String mockClassName = relativePath.replace(".class", ".java");
+            String classNamePlus = relativePath.replace(".class", ".java");
 
-            if (new GitDiff().isDiff(mockClassName, baseBranch, diffBranch)) {
+            if (classNamePlus.contains("/target/classes/")) {
+                int index = classNamePlus.indexOf("/target/classes/", 0) + 16;
+                String mockClassName = classNamePlus.substring(index);
+                if (new GitDiff().isDiff(mockClassName, baseBranch, diffBranch)) {
 
-                final InputStream in = new FileInputStream(file);
-                try {
-                    count += analyzeAll(in, file.getPath());
-                } finally {
-                    in.close();
+                    final InputStream in = new FileInputStream(file);
+                    try {
+                        count += analyzeAll(in, file.getPath());
+                    } finally {
+                        in.close();
+                    }
                 }
             }
         }
