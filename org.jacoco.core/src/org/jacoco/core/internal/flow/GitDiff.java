@@ -16,46 +16,57 @@ import org.eclipse.jgit.treewalk.filter.PathSuffixFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class GitDiff {
-    private Logger log = LoggerFactory.getLogger(GitDiff.class);
     private static Git git;
     private static Repository repository;
     private static final String PREFIX = "refs/heads/";
 
-    public GitDiff() {
-        // 获取git对象--单例DCL模式
-        if (null == repository) {
-            synchronized (GitDiff.class) {
-                if (null == repository) {
-                    try {
-
-                        // 方式1
-                        FileRepositoryBuilder builder = new FileRepositoryBuilder();
-                        repository = builder.readEnvironment().findGitDir().build();
-
-                        // 方式2
-//                        String projectPath = System.getProperty("user.dir");
+    public GitDiff(String projectPath) {
+//        // 获取git对象--单例DCL模式
+//        if (null == repository) {
+//            synchronized (GitDiff.class) {
+//                if (null == repository) {
+//                    try {
+//
+//                        // 方式1
+//                        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+////                        repository = builder.readEnvironment().findGitDir().build();
+//
+//                        // 方式2
+////                        String projectPath = System.getProperty("user.dir");
+//                        System.out.println("projectRepository:" + projectPath + "/.git");
 //                        repository = builder.setGitDir(new File(projectPath + "/.git")).build();
+//
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
+//        }
+//
+//        // 获取repository对象--单例DCL模式
+//        if (null == git) {
+//            synchronized (GitDiff.class) {
+//                if (null == git) {
+//                    git = new Git(repository);
+//                }
+//            }
+//        }
 
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+
+        try {
+            repository = builder.setGitDir(new File(projectPath + "/.git")).build();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        // 获取repository对象--单例DCL模式
-        if (null == git) {
-            synchronized (GitDiff.class) {
-                if (null == git) {
-                    git = new Git(repository);
-                }
-            }
-        }
+        git = new Git(repository);
 
     }
 
@@ -110,7 +121,7 @@ public class GitDiff {
     }
 
     /**
-     * 获取修改的内容
+     * 获取修改的Java类
      *
      * @param baseBranch
      * @param diffBranch
@@ -123,7 +134,7 @@ public class GitDiff {
     }
 
     /**
-     * 获取新增内容
+     * 获取新增Java类
      *
      * @param baseBranch
      * @param diffBranch
@@ -136,7 +147,7 @@ public class GitDiff {
     }
 
     /**
-     * 获取删除的内容
+     * 获取删除的Java类
      *
      * @param baseBranch
      * @param diffBranch
@@ -149,7 +160,7 @@ public class GitDiff {
     }
 
     /**
-     * 获取非删除的内容（即modify & add）
+     * 获取非删除的Java类（即modify & add）
      *
      * @param baseBranch
      * @param diffBranch
@@ -175,19 +186,6 @@ public class GitDiff {
             }
         }
         return false;
-    }
-
-
-    public static void main(String[] args) {
-
-//        GitDiff gitDiff = new GitDiff();
-//        List<DiffEntry> diffs = gitDiff.getDiffEntriesByBranch("master", "home-test");
-//
-//        List<DiffEntry> modify = gitDiff.getModify("master", "home-test");
-//        List<DiffEntry> add = gitDiff.getAdd("master", "home-test");
-//        List<DiffEntry> delete = gitDiff.getDelete("master", "home-test");
-//        List<DiffEntry> delete = gitDiff.getNotDelete("master", "home-test");
-
     }
 
 }

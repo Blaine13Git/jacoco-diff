@@ -46,6 +46,7 @@ public final class ExecutionDataClient {
 				localFile);
 
 		// Open a socket to the coverage agent:
+//		final Socket socket = new Socket(InetAddress.getLocalHost(), PORT);
 		final Socket socket = new Socket(InetAddress.getByName(ADDRESS), PORT);
 		final RemoteControlWriter writer = new RemoteControlWriter(
 				socket.getOutputStream());

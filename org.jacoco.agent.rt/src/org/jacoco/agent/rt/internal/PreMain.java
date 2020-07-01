@@ -36,6 +36,13 @@ public final class PreMain {
         // no instances
     }
 
+    /**
+     * JVM启动时添加代理
+     *
+     * @param options
+     * @param inst
+     * @throws Exception
+     */
     public static void premain(final String options, final Instrumentation inst) throws Exception {
 
         // 重定向输出到指定文件
@@ -62,7 +69,7 @@ public final class PreMain {
             System.out.println("======================日志被重定向到 >> " + traceFile + "======================");
         }
 
-        System.out.println("======================init======================");
+        System.out.println("======================init by premain======================");
 
         final AgentOptions agentOptions = new AgentOptions(options);
 
@@ -73,6 +80,28 @@ public final class PreMain {
         runtime.startup(agent.getData());
 
         inst.addTransformer(new CoverageTransformer(runtime, agentOptions, IExceptionLogger.SYSTEM_ERR));
+    }
+
+    /**
+     * JVM启动后添加代理
+     *
+     * @param options
+     * @param instrumentation
+     * @throws Exception
+     */
+    public static void agentmain(String options, Instrumentation instrumentation) throws Exception {
+
+        System.out.println("======================init by agentmain======================");
+
+        final AgentOptions agentOptions = new AgentOptions(options);
+
+        final Agent agent = Agent.getInstance(agentOptions);
+
+        final IRuntime runtime = createRuntime(instrumentation);
+
+        runtime.startup(agent.getData());
+
+        instrumentation.addTransformer(new CoverageTransformer(runtime, agentOptions, IExceptionLogger.SYSTEM_ERR));
     }
 
     private static IRuntime createRuntime(final Instrumentation inst) throws Exception {

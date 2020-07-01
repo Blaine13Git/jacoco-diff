@@ -86,10 +86,8 @@ public class Analyzer {
             probes = data.getProbes();
             noMatch = false;
         }
-        final ClassCoverageImpl coverage = new ClassCoverageImpl(className,
-                classid, noMatch);
-        final ClassAnalyzer analyzer = new ClassAnalyzer(coverage, probes,
-                stringPool) {
+        final ClassCoverageImpl coverage = new ClassCoverageImpl(className, classid, noMatch);
+        final ClassAnalyzer analyzer = new ClassAnalyzer(coverage, probes, stringPool) {
             @Override
             public void visitEnd() {
                 super.visitEnd();
@@ -108,8 +106,7 @@ public class Analyzer {
         if ((reader.getAccess() & Opcodes.ACC_SYNTHETIC) != 0) {
             return;
         }
-        final ClassVisitor visitor = createAnalyzingVisitor(classId,
-                reader.getClassName());
+        final ClassVisitor visitor = createAnalyzingVisitor(classId, reader.getClassName());
         reader.accept(visitor, 0);
     }
 
@@ -120,8 +117,7 @@ public class Analyzer {
      * @param location a location description used for exception messages
      * @throws IOException if the class can't be analyzed
      */
-    public void analyzeClass(final byte[] buffer, final String location)
-            throws IOException {
+    public void analyzeClass(final byte[] buffer, final String location) throws IOException {
         try {
             analyzeClass(buffer);
         } catch (final RuntimeException cause) {
@@ -137,8 +133,7 @@ public class Analyzer {
      * @param location a location description used for exception messages
      * @throws IOException if the stream can't be read or the class can't be analyzed
      */
-    public void analyzeClass(final InputStream input, final String location)
-            throws IOException {
+    public void analyzeClass(final InputStream input, final String location) throws IOException {
         final byte[] buffer;
         try {
             buffer = InputStreams.readFully(input);
@@ -168,8 +163,7 @@ public class Analyzer {
      * @return number of class files found
      * @throws IOException if the stream can't be read or a class can't be analyzed
      */
-    public int analyzeAll(final InputStream input, final String location)
-            throws IOException {
+    public int analyzeAll(final InputStream input, final String location) throws IOException {
         final ContentTypeDetector detector;
         try {
             detector = new ContentTypeDetector(input);
@@ -237,26 +231,30 @@ public class Analyzer {
         } else {
 
             // 只分析被改动过的文件
-            String absolutePath = file.getAbsolutePath();
-            String projectPath = System.getProperty("user.dir");
-            String projectClassPath = projectPath;
-            String relativePath = absolutePath.replace(projectClassPath, "");
-            String classNamePlus = relativePath.replace(".class", ".java");
+            if (file.getAbsolutePath().endsWith(".class")) {
+                String absolutePath = file.getAbsolutePath();
+                int index1 = absolutePath.indexOf("/target/classes/");
+                int index2 = absolutePath.substring(0, index1).lastIndexOf("/") + 1;
 
-            if (classNamePlus.contains("/target/classes/")) {
-                int index = classNamePlus.indexOf("/target/classes/", 0) + 16;
-                String mockClassName = classNamePlus.substring(index);
-                if (new GitDiff().isDiff(mockClassName, baseBranch, diffBranch)) {
+                String relativePath = absolutePath.substring(index2);
+                String classNamePlus = relativePath.replace(".class", ".java");
 
-                    final InputStream in = new FileInputStream(file);
-                    try {
-                        count += analyzeAll(in, file.getPath());
-                    } finally {
-                        in.close();
+                if (classNamePlus.contains("/target/classes/")) {
+                    int index = classNamePlus.indexOf("/target/classes/", 0) + 16;
+                    String mockClassName = classNamePlus.substring(index);
+                    if (new GitDiff(absolutePath.substring(0, index2 - 1)).isDiff(mockClassName, baseBranch, diffBranch)) {
+
+                        final InputStream in = new FileInputStream(file);
+                        try {
+                            count += analyzeAll(in, file.getPath());
+                        } finally {
+                            in.close();
+                        }
                     }
                 }
             }
         }
+
         return count;
     }
 

@@ -46,10 +46,8 @@ public final class ExecutionDataServer {
 	 * @throws IOException
 	 */
 	public static void main(final String[] args) throws IOException {
-		final ExecutionDataWriter fileWriter = new ExecutionDataWriter(
-				new FileOutputStream(DESTFILE));
-		final ServerSocket server = new ServerSocket(PORT, 0,
-				InetAddress.getByName(ADDRESS));
+		final ExecutionDataWriter fileWriter = new ExecutionDataWriter(new FileOutputStream(DESTFILE));
+		final ServerSocket server = new ServerSocket(PORT, 0, InetAddress.getByName(ADDRESS));
 		while (true) {
 			final Handler handler = new Handler(server.accept(), fileWriter);
 			new Thread(handler).start();

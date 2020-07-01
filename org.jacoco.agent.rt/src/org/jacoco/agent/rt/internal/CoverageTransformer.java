@@ -32,8 +32,6 @@ import org.slf4j.LoggerFactory;
  */
 public class CoverageTransformer implements ClassFileTransformer {
 
-    Logger log = LoggerFactory.getLogger(CoverageTransformer.class);
-
     private static final String AGENT_PREFIX;
 
     static {
@@ -85,8 +83,8 @@ public class CoverageTransformer implements ClassFileTransformer {
         baseBranch = options.getBaseBranch();
         diffBranch = options.getDiffBranch();
 
-        log.info(">>> baseBranch >>> " + baseBranch);
-        log.info(">>> diffBranch >>> " + diffBranch);
+        System.out.println(">>> baseBranch >>> " + baseBranch);
+        System.out.println(">>> diffBranch >>> " + diffBranch);
     }
 
     public byte[] transform(final ClassLoader loader,
@@ -112,7 +110,7 @@ public class CoverageTransformer implements ClassFileTransformer {
             return null;
         }
 
-        if (!new GitDiff().isDiff(classname, baseBranch, diffBranch)) {
+        if (!new GitDiff(System.getProperty("user.dir")).isDiff(classname, baseBranch, diffBranch)) {
             return null;
         }
 
