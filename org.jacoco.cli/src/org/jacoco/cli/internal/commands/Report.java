@@ -97,8 +97,7 @@ public class Report extends Command {
     public int execute(final PrintWriter out, final PrintWriter err)
             throws IOException {
         final ExecFileLoader loader = loadExecutionData(out);
-        final IBundleCoverage bundle = analyze(loader.getExecutionDataStore(),
-                out);
+        final IBundleCoverage bundle = analyze(loader.getExecutionDataStore(), out);
         writeReports(bundle, loader, out);
         return 0;
     }

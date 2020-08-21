@@ -17,7 +17,7 @@
   <parent>
     <groupId>org.jacoco</groupId>
     <artifactId>org.jacoco.build</artifactId>
-    <version>13.2.4</version>
+    <version>13.2.5</version>
     <relativePath>../org.jacoco.build</relativePath>
   </parent>
 

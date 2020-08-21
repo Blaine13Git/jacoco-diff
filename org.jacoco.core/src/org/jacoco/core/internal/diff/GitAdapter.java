@@ -26,11 +26,9 @@ public class GitAdapter {
     private String gitFilePath;
 
     //  Git授权
-    private static final String USERNAME = "qa-jenkins"; //qa-jenkins
-    private static final String PASSWORD = "*6OGZD9hY5Ylkk$d!Mjv"; //*6OGZD9hY5Ylkk$d!Mjv
-
-    private static UsernamePasswordCredentialsProvider usernamePasswordCredentialsProvider = new UsernamePasswordCredentialsProvider(USERNAME, PASSWORD);
-    private static final CredentialsProvider CP = new UsernamePasswordCredentialsProvider(USERNAME, PASSWORD);
+    public static final String USERNAME = "qa-jenkins"; //qa-jenkins
+    public static final String PASSWORD = "*6OGZD9hY5Ylkk$d!Mjv"; //*6OGZD9hY5Ylkk$d!Mjv
+    public static final UsernamePasswordCredentialsProvider usernamePasswordCredentialsProvider = new UsernamePasswordCredentialsProvider(USERNAME, PASSWORD);
 
     public GitAdapter(String gitFilePath) {
         this.gitFilePath = gitFilePath;
@@ -66,7 +64,7 @@ public class GitAdapter {
      */
     public static void setCredentialsProvider(String username, String password) {
         if (usernamePasswordCredentialsProvider == null) {
-            usernamePasswordCredentialsProvider = new UsernamePasswordCredentialsProvider(USERNAME, PASSWORD);
+            System.out.println("No");
         }
     }
 
@@ -117,7 +115,10 @@ public class GitAdapter {
      */
     public void checkOut(String branchName) throws GitAPIException {
         //  切换分支
-        git.checkout().setCreateBranch(false).setName(branchName).call();
+        git.checkout()
+                .setCreateBranch(false)
+                .setName(branchName)
+                .call();
     }
 
     /**
@@ -130,15 +131,23 @@ public class GitAdapter {
      */
     public void checkOutAndPull(Ref localRef, String branchName) throws GitAPIException {
         boolean isCreateBranch = localRef == null;
+
         if (!isCreateBranch && checkBranchNewVersion(localRef)) {
             return;
         }
+
         //  切换分支
-        git.checkout().setCreateBranch(isCreateBranch).setName(branchName)
+        git.checkout()
+                .setCreateBranch(isCreateBranch)
+                .setName(branchName)
                 .setStartPoint("origin/" + branchName)
-                .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM).call();
+                .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
+                .call();
+
         //  拉取最新代码
-        git.pull().setCredentialsProvider(usernamePasswordCredentialsProvider).call();
+        git.pull()
+                .setCredentialsProvider(usernamePasswordCredentialsProvider)
+                .call();
     }
 
     /**
@@ -151,8 +160,13 @@ public class GitAdapter {
     private boolean checkBranchNewVersion(Ref localRef) throws GitAPIException {
         String localRefName = localRef.getName();
         String localRefObjectId = localRef.getObjectId().getName();
+
         //  获取远程所有分支
-        Collection<Ref> remoteRefs = git.lsRemote().setCredentialsProvider(usernamePasswordCredentialsProvider).setHeads(true).call();
+        Collection<Ref> remoteRefs = git.lsRemote()
+                .setCredentialsProvider(usernamePasswordCredentialsProvider)
+                .setHeads(true)
+                .call();
+
         for (Ref remoteRef : remoteRefs) {
             String remoteRefName = remoteRef.getName();
             String remoteRefObjectId = remoteRef.getObjectId().getName();
@@ -164,5 +178,14 @@ public class GitAdapter {
             }
         }
         return false;
+    }
+
+
+    public static void main(String[] args) throws Exception {
+        String oldBranchName = "master";
+        GitAdapter gitAdapter = new GitAdapter("/Users/changfeng/work/jacoco/codes/live/.git");
+
+        Ref localMasterRef = gitAdapter.getRepository().exactRef("refs/heads/" + oldBranchName);
+        gitAdapter.checkOutAndPull(localMasterRef,oldBranchName);
     }
 }

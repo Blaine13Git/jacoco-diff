@@ -83,8 +83,6 @@ public class CoverageTransformer implements ClassFileTransformer {
         baseBranch = options.getBaseBranch();
         diffBranch = options.getDiffBranch();
 
-        System.out.println(">>> baseBranch >>> " + baseBranch);
-        System.out.println(">>> diffBranch >>> " + diffBranch);
     }
 
     public byte[] transform(final ClassLoader loader,
@@ -106,13 +104,13 @@ public class CoverageTransformer implements ClassFileTransformer {
          * 1、没有分支信息返回
          * 2、如果不是diff的文件，返回 !classname.contains("LiveToolsController")
          */
-        if ("".equals(baseBranch) || "".equals(diffBranch)) {
+/*        if ("".equals(baseBranch) || "".equals(diffBranch)) {
             return null;
         }
 
         if (!new GitDiff(System.getProperty("user.dir")).isDiff(classname, baseBranch, diffBranch)) {
             return null;
-        }
+        }*/
 
         try {
             classFileDumper.dump(classname, classfileBuffer);

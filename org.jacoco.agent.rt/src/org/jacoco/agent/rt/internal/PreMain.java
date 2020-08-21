@@ -69,7 +69,7 @@ public final class PreMain {
             System.out.println("======================日志被重定向到 >> " + traceFile + "======================");
         }
 
-        System.out.println("======================init by premain======================");
+        System.out.println("====================== Jacoco Begin…… ======================");
 
         final AgentOptions agentOptions = new AgentOptions(options);
 
